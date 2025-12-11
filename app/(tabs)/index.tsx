@@ -1,98 +1,73 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity } from 'react-native';
 import { Link } from 'expo-router';
+
+// 1. 定义简单的数据结构 (暂时用假数据)
+const myHoldings = [
+  { id: '1', symbol: 'AAPL', name: 'Apple Inc.', price: '180.50' },
+  { id: '2', symbol: 'MSFT', name: 'Microsoft', price: '420.00' },
+  { id: '3', symbol: 'TSLA', name: 'Tesla', price: '175.30' },
+];
 
 export default function HomeScreen() {
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
-
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <View style={styles.container}>
+      <Text style={styles.headerTitle}>我的持仓 💰</Text>
+      
+      {/* 2. 使用 FlatList 渲染列表 */}
+      <FlatList
+        data={myHoldings}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          // 2. 使用 Link 包裹整行
+          // asChild 表示 Link 的子组件来处理样式和点击，这在列表中很常用
+          <Link href={{
+            pathname: '/details',
+            params: { symbol: item.symbol } // 👈 把股票代码传过去
+          }} asChild>
+            {/* TouchableOpacity 提供了点击时的透明度反馈效果 */}
+            <TouchableOpacity style={styles.stockItem}>
+              <View>
+                <Text style={styles.symbol}>{item.symbol}</Text>
+                <Text style={styles.name}>{item.name}</Text>
+              </View>
+              <Text style={styles.price}>${item.price}</Text>
+            </TouchableOpacity>
+          </Link>
+        )}
+      />
+    </View>
   );
 }
 
+// 3. 样式表 (CSS-in-JS)
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    paddingTop: 50, // 避开顶部的刘海屏区域
+    paddingHorizontal: 20,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  stockItem: {
+    flexDirection: 'row', // 横向布局
+    justifyContent: 'space-between',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  symbol: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  name: {
+    color: 'gray',
+  },
+  price: {
+    fontSize: 18,
+    fontWeight: '600',
   },
 });
