@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View, FlatList } from 'react-native';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity } from 'react-native';
+import { useSession } from '@/ctx/ctx'; // 1. 引入我們的全局 Session Hook
 
 // 1. 定义简单的数据结构 (暂时用假数据)
 const myHoldings = [
@@ -8,11 +9,19 @@ const myHoldings = [
 ];
 
 export default function HomeScreen() {
+  const { signOut } = useSession(); // 2. 獲取登出方法
+
   return (
     <View style={styles.container}>
-      <Text style={styles.headerTitle}>观察列表 👀</Text>
+      {/* 3. 在標題旁邊加一個臨時的登出按鈕 */}
+      <View style={styles.headerContainer}>
+        <Text style={styles.headerTitle}>觀察列表 👀</Text>
+        <TouchableOpacity onPress={signOut} style={styles.signOutButton}>
+          <Text style={styles.signOutText}>登出</Text>
+        </TouchableOpacity>
+      </View>
       
-      {/* 2. 使用 FlatList 渲染列表 */}
+      {/* ... (FlatList 部分保持不變) ... */}
       <FlatList
         data={myHoldings}
         keyExtractor={(item) => item.id}
@@ -30,18 +39,38 @@ export default function HomeScreen() {
   );
 }
 
+
+
 // 3. 样式表 (CSS-in-JS)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    paddingTop: 50, // 避开顶部的刘海屏区域
+    paddingTop: 50,
     paddingHorizontal: 20,
+  },
+  // 修改標題區域樣式，讓它橫向排列
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 20,
+  },
+  // 新增登出按鈕樣式
+  signOutButton: {
+    backgroundColor: '#ff4444',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  signOutText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 14,
   },
   stockItem: {
     flexDirection: 'row', // 横向布局
