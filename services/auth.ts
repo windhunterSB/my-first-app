@@ -1,45 +1,61 @@
-// services/auth.ts
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Config } from '@/constants/config'; // 👈 確保你已經創建了 constants/config.ts
 
-// 定义用户类型
+// 定義用戶類型
 export interface User {
   email: string;
-  uuid: string; // 这是关联后端数据的关键钥匙
+  uuid: string; // 這是關聯後端數據的關鍵鑰匙
 }
 
 const USER_STORAGE_KEY = 'current_user';
 
 export const AuthService = {
-  // 模拟登录/注册接口
-  // 未来这里会替换成真实的 fetch('https://your-python-backend/api/login')
+  // 登錄/註冊接口：從 Python 後端獲取用戶數據
   loginOrRegister: async (email: string): Promise<User> => {
-    // 模拟网络延迟
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // 简单的模拟逻辑：
-    // 实际项目中，这里应该把 email 发给后端，后端去数据库查，查不到就新建，查到了就返回 uuid
-    console.log(`正在向服务端请求登录: ${email}`);
     
-    // 这里我们暂时生成一个假的 UUID 给前端用
-    const mockUuid = 'user_' + Math.random().toString(36).substring(7);
-    
-    const user: User = {
-      email: email,
-      uuid: mockUuid,
-    };
+    console.log(`正在向服務端請求登錄: ${email}`);
 
-    // 登录成功后，把用户信息存在本地，下次打开 App 就不用再登录了
-    await AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
-    return user;
+    try {
+      // 👇 使用 Config.API_URL 拼接完整的接口地址
+      // 這樣無論是開發環境(localhost/10.0.2.2)還是生產環境，這裡都不用改
+      const response = await fetch(`${Config.API_URL}/api/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        // 對應後端 Pydantic 定義的 class LoginRequest(BaseModel): email: str
+        body: JSON.stringify({ email: email }), 
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // 👇 解析後端返回的 JSON
+      const data = await response.json();
+      console.log('後端返回:', data);
+
+      // 我們的後端返回結構是 { msg: "...", user: { email: "...", uuid: "..." } }
+      // 所以我們要取 data.user
+      const user: User = data.user;
+
+      // 登錄成功後，把用戶信息存在本地，下次打開 App 就不用再登錄了
+      await AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+      return user;
+
+    } catch (error) {
+      console.error('登錄請求失敗:', error);
+      throw error; // 拋出異常，讓 UI 層（LoginScreen）去處理，比如停止轉圈圈或顯示錯誤
+    }
   },
 
-  // 获取当前登录的用户
+  // 獲取當前登錄的用戶（從本地緩存讀取，用於 App 啟動時恢復狀態）
   getCurrentUser: async (): Promise<User | null> => {
     const jsonValue = await AsyncStorage.getItem(USER_STORAGE_KEY);
     return jsonValue != null ? JSON.parse(jsonValue) : null;
   },
 
-  // 退出登录
+  // 退出登錄
   logout: async () => {
     await AsyncStorage.removeItem(USER_STORAGE_KEY);
   }
